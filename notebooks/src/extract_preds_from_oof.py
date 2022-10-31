@@ -30,7 +30,7 @@ def make_labels(id):
 
 
 def mae(y_true, y_pred):
-    return np.mean(np.abs(y_true - y_pred))
+    return np.abs(y_true - y_pred)
 
 
 list(map(make_labels, train_df['image_id_worm'].values))
@@ -47,7 +47,8 @@ def return_error(id):
     abw_label = id_label_dict[f'{id}_abw.jpg']
     pbw_pred = pred_label_dict[f'{id}_pbw.jpg']
     abw_pred = pred_label_dict[f'{id}_abw.jpg']
-    error = mae(np.array(pbw_label), np.array(pbw_pred)) + mae(np.array(abw_label), np.array(abw_pred))
+    error = float(mae(np.array(pbw_label), np.array(pbw_pred)) + mae(np.array(abw_label), np.array(abw_pred)))
+    print(f'{id} error: {error}')
     return error
 
 
