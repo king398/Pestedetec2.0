@@ -1,3 +1,5 @@
+__author__ = 'Mithil Salunkhe: https://www.kaggle.com/mithilsalunkhe'
+
 import pandas as pd
 import os
 from ensemble_boxes import *
@@ -8,7 +10,7 @@ pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5s_5_f
 ids = []
 labels_final = []
 
-weights = [5,5,5,5,5]
+weights = [1, 1, 1, 1, 1]
 iou_thr = 0.99
 skip_box_thr = 0.001
 
