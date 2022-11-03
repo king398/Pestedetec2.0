@@ -1,57 +1,55 @@
 __author__ = 'Mithil Salunkhe: https://www.kaggle.com/mithilsalunkhe'
 
+from statistics import mode
 import pandas as pd
 import os
 from ensemble_boxes import *
 from tqdm import tqdm
 
 test_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Test.csv')
-pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5s_5_fold_1536_image_size'
+pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-image-size'
 ids = []
 labels_final = []
 
 weights = [1, 1, 1, 1, 1]
-iou_thr = 0.99
-skip_box_thr = 0.001
+iou_thr = 0.5
+skip_box_thr = 0.0001
 
 
 def make_labels(id):
     id = id.split('.')[0]
     ids.extend([f"{id}_pbw", f"{id}_abw"])
-    pbw = 0
-    abw = 0
-    bboxes_list = []
-    scores_list = []
-    labels_list = []
-    for i in range(5):
-        bboxes = []
-        scores = []
-        labels = []
+    pbw_list = []
+    abw_list = []
 
-        if os.path.exists(f'{pred_path}/yolov5s6_image_size_1536_upscale_fold_0_test/labels/{id}.txt'):
-            with open(f'{pred_path}/yolov5s6_image_size_1536_upscale_fold_0_test/labels/{id}.txt') as f:
+    for i in range(5):
+
+        labels = []
+        pbw = 0
+        abw = 0
+
+        if os.path.exists(f'{pred_path}/yolov5m6-1536-image-size_{i}_test/labels/{id}.txt'):
+            with open(f'{pred_path}/yolov5m6-1536-image-size_{i}_test/labels/{id}.txt') as f:
                 preds_per_line = f.readlines()
 
                 for i in preds_per_line:
                     i = i.split(' ')
-                    bboxes.append([float(i[3]), float(i[4]), float(i[1]), float(i[2])])
-                    scores.append(float(i[5]))
+
                     labels.append(int(i[0]))
-        bboxes_list.append(bboxes)
-        scores_list.append(scores)
-        labels_list.append(labels)
-    boxes, scores, labels = weighted_boxes_fusion(bboxes_list, scores_list, labels_list, weights=weights,
-                                                  iou_thr=iou_thr, skip_box_thr=skip_box_thr)
-    for i in range(len(labels)):
-        if labels[i] == 0:
-            pbw += 1
-        else:
-            abw += 1
+        for i in range(len(labels)):
+            if labels[i] == 0:
+                pbw += 1
+            else:
+                abw += 1
+        pbw_list.append(pbw)
+        abw_list.append(abw)
+    pbw = mode(pbw_list)
+    abw = mode(abw_list)
     labels_final.extend([pbw, abw])
 
 
 list(map(make_labels, tqdm(test_df['image_id_worm'].values)))
 submission = pd.DataFrame({'image_id_worm': ids, 'label': labels_final}, index=None)
 submission.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/wbf_try.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/mode.csv',
     index=False)
