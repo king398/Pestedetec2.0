@@ -9,11 +9,11 @@ from ensemble_boxes import *
 from tqdm import tqdm
 
 test_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Test.csv')
-pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-higher-confidence-0.35-image-size'
+pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-image-size-30-epoch'
 ids = []
 labels_final = []
 
-weights = [1, 1, 1, 1, 1,0.8,]
+weights = [1, 1, 1, 1, 1, 0.6, 0.6, 0.6, 0.6, 0.6]
 
 
 def make_labels(id):
@@ -27,29 +27,7 @@ def make_labels(id):
         labels = []
         pbw = 0
         abw = 0
-        path = f'{pred_path}/yolov5m6-1536-higher-confidence-0.35-image-size_{i}_test/labels/{id}.txt'
-
-        if os.path.exists(path):
-            with open(path) as f:
-                preds_per_line = f.readlines()
-
-                for i in preds_per_line:
-                    i = i.split(' ')
-
-                    labels.append(int(i[0]))
-        for i in range(len(labels)):
-            if labels[i] == 0:
-                pbw += 1
-            else:
-                abw += 1
-        pbw_list.append(pbw)
-        abw_list.append(abw)
-    for i in range(5):
-
-        labels = []
-        pbw = 0
-        abw = 0
-        path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-image-size/yolov5m6-1536-image-size_{i}_test/labels/{id}.txt'
+        path = f'{pred_path}/fold_{i}_test/labels/{id}.txt'
 
         if os.path.exists(path):
             with open(path) as f:
@@ -67,13 +45,13 @@ def make_labels(id):
         pbw_list.append(pbw)
         abw_list.append(abw)
 
-    pbw = int(round(np.average(pbw_list, weights=weights)))
-    abw = int(round(np.average(abw_list)))
+    pbw = int((np.average(pbw_list)))
+    abw = int((np.average(abw_list)))
     labels_final.extend([pbw, abw])
 
 
 list(map(make_labels, tqdm(test_df['image_id_worm'].values)))
 submission = pd.DataFrame({'image_id_worm': ids, 'label': labels_final}, index=None)
 submission.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/ensemble_average.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/yolov5m6-1536-image-size-30-epoch.csv',
     index=False)
