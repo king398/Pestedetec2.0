@@ -10,14 +10,20 @@ labels = []
 pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-30-epoch'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
+classifier_pred = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/oof.csv')
+classifier_pred_dict = dict(zip(classifier_pred['id'].values, classifier_pred['pred'].values))
+
 
 def make_labels(id):
     id = id.split('.')[0]
     ids.extend([f"{id}_pbw.jpg", f"{id}_abw.jpg"])
     pbw = 0
     abw = 0
+
+    classifier_pred = classifier_pred_dict[id]
+
     if os.path.exists(
-            f'{pred_labels_path}/{id}.txt'):
+            f'{pred_labels_path}/{id}.txt') and classifier_pred > 0.1:
         with open(
                 f'{pred_labels_path}/{id}.txt') as f:
             preds_per_line = f.readlines()
