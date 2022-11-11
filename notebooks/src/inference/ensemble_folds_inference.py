@@ -9,9 +9,12 @@ from ensemble_boxes import *
 from tqdm import tqdm
 
 test_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Test.csv')
-pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-image-size'
-classifier_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/inference_classifier.csv')
+pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-higher-confidence-0.35-image-size'
+pred_path_2 = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-image-size'
+classifier_df = pd.read_csv(
+    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/inference_classifier.csv')
 classifer_dict = dict(zip(classifier_df['id'].values, classifier_df['label'].values))
+
 ids = []
 labels_final = []
 
@@ -31,9 +34,9 @@ def make_labels(id):
         labels = []
         pbw = 0
         abw = 0
-        path = f'{pred_path}/yolov5m6-1536-image-size_{i}_test/labels/{id}.txt'
+        path = f'{pred_path}/yolov5m6-1536-higher-confidence-0.35-image-size_{i}_test/labels/{id}.txt'
 
-        if os.path.exists(path) and classifier_pred > 0.1:
+        if os.path.exists(path) and classifier_pred > 0.15:
             with open(path) as f:
                 preds_per_line = f.readlines()
 
@@ -49,7 +52,6 @@ def make_labels(id):
         pbw_list.append(pbw)
         abw_list.append(abw)
 
-
     pbw = int((np.average(pbw_list)))
     abw = int((np.average(abw_list)))
     labels_final.extend([pbw, abw])
@@ -58,5 +60,5 @@ def make_labels(id):
 list(map(make_labels, tqdm(test_df['image_id_worm'].values)))
 submission = pd.DataFrame({'image_id_worm': ids, 'label': labels_final}, index=None)
 submission.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/yolov5m6-1536-image-size-with_classifier-ensemble.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/yolov5m6-1536-higher-confidence-0.35-image-size-with_classifier-.csv',
     index=False)

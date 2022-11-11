@@ -52,7 +52,6 @@ class BollwormDataset(Dataset):
         path = self.ids[index]
         id = path.split('/')[-1].split('.')[0]
 
-
         img = cv2.imread(path)
         if os.path.exists(f'{self.path}/labels/val/{id}.txt'):
             label = 1
@@ -88,15 +87,16 @@ for i in range(5):
     val_ids = glob.glob(f"{path}/images/val/*")
 
     val_dataset = BollwormDataset(path, val_ids, val=True, transforms=Compose([
-        Resize(512, 512),
+        Resize(1024, 1024),
         Normalize(),
         ToTensorV2()
     ]))
     val_ids = [i.split('/')[-1].split('.')[0] for i in val_ids]
     final_val.extend(val_ids)
     val_dl = DataLoader(val_dataset, batch_size=16, shuffle=False, num_workers=8, pin_memory=True)
-    model = Model('tf_efficientnet_b0_ns', pretrained=False)
-    model.load_state_dict(torch.load(f'/home/mithil/PycharmProjects/Pestedetec2.0/models/classfication/model_{i}.pth'))
+    model = Model('tf_efficientnet_b2_ns', pretrained=False)
+    model.load_state_dict(torch.load(
+        f'/home/mithil/PycharmProjects/Pestedetec2.0/models/classfication/tf_effnet_b2_1024_image_size/model_{i}.pth'))
     model = model.cuda()
     device = torch.device('cuda')
     val_preds = oof_fn(model, device, val_dl)
@@ -105,4 +105,5 @@ for i in range(5):
 oof_df = pd.DataFrame()
 oof_df['id'] = final_val
 oof_df['pred'] = final_pred
-oof_df.to_csv('/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/oof.csv', index=False)
+oof_df.to_csv('/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/tf_effnet_b2_1024_image_size.csv',
+              index=False)

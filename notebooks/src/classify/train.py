@@ -3,22 +3,24 @@ import os
 import random
 import cv2
 import numpy as np
-import timm
 import torch
-from albumentations import *
-from albumentations.pytorch import ToTensorV2
 from sklearn.metrics import roc_auc_score
 from torch import nn
 from torch.cuda.amp import autocast, GradScaler
 from torch.utils.data import Dataset, DataLoader
 from tqdm.auto import tqdm
-from torch.nn.parallel import DistributedDataParallel as DDP
 
-os.makedirs('classfication', exist_ok=True)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+os.system('pip install -qq wandb timm albumentations gpustat')
+os.system("sudo add-apt-repository universe")
+os.system("sudo apt-get update")
+os.system("sudo apt-get install htop")
+import timm
+from albumentations import *
+from albumentations.pytorch import ToTensorV2
 import wandb
 
+os.makedirs('classfication/tf_efficientnet_b4_ns', exist_ok=True)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 wandb.init(project="pesticide")
 
@@ -95,7 +97,7 @@ def roc_auc_pytorch(y_true, y_pred):
     return roc_auc_score(y_true.detach().cpu().numpy(), y_pred.detach().cpu().numpy())
 
 
-def accuracy(output, target, threshold=0.6):
+def accuracy(output, target, threshold=0.3):
     output = (output > threshold).int()
     return (output == target).float().mean()
 
@@ -157,9 +159,9 @@ for i in range(5):
     val_ids = [i.split('/')[-1].split('.')[0] for i in val_ids]
     train_ds = BollwormDataset(path, train_ids, False, transforms=transform(1024))
     val_ds = BollwormDataset(path, val_ids, True, transforms=transform(1024))
-    train_dl = DataLoader(train_ds, batch_size=32, shuffle=True, num_workers=8, pin_memory=True)
-    val_dl = DataLoader(val_ds, batch_size=32, shuffle=False, num_workers=8, pin_memory=True)
-    model = Model('tf_efficientnet_b2_ns', pretrained=True)
+    train_dl = DataLoader(train_ds, batch_size=24, shuffle=True, num_workers=8, pin_memory=True)
+    val_dl = DataLoader(val_ds, batch_size=24, shuffle=False, num_workers=8, pin_memory=True)
+    model = Model('tf_efficientnet_b4_ns', pretrained=True)
     model.to(device)
     optimizer = torch.optim.Adam(model.parameters())
     criterion = nn.BCEWithLogitsLoss()
@@ -170,4 +172,4 @@ for i in range(5):
         train(model, optimizer, train_dl, criterion, scheduler, device, i)
         val(model, val_dl, criterion, device, i)
 
-    torch.save(model.state_dict(), f"classfication/model_{i}.pth")
+    torch.save(model.state_dict(), f"classfication/tf_efficientnet_b4_ns/model_{i}.pth")

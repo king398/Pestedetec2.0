@@ -65,7 +65,8 @@ def inference(model, loader, device):
     with torch.no_grad():
         for images in tqdm(loader):
             images = images.to(device)
-            pred = model(images)
+            with torch.cuda.amp.autocast():
+                pred = model(images)
             preds.append(pred.sigmoid().detach().cpu().numpy())
 
     return np.concatenate(preds).reshape(-1)
@@ -77,15 +78,16 @@ ids = [os.path.basename(id) for id in ids]
 ids = [id.split('.')[0] for id in ids]
 dataset = BollwormDataset('/home/mithil/PycharmProjects/Pestedetec2.0/notebooks/yolov5/test_images', ids,
                           transforms=Compose([
-                              Resize(512, 512),
+                              Resize(1024, 1024),
                               Normalize(),
                               ToTensorV2()
                           ]))
 loader = DataLoader(dataset, batch_size=16, shuffle=False, num_workers=4, pin_memory=True)
 for i in range(5):
-    model = Model('tf_efficientnet_b0_ns', pretrained=False)
+    model = Model('tf_efficientnet_b2_ns', pretrained=False)
     model.load_state_dict(
-        torch.load(f'/home/mithil/PycharmProjects/Pestedetec2.0/models/classfication/model_{i}.pth'))
+        torch.load(
+            f'/home/mithil/PycharmProjects/Pestedetec2.0/models/classfication/tf_effnet_b2_1024_image_size/model_{i}.pth'))
     model.to('cuda')
     pred = inference(model, loader, 'cuda')
     if preds is None:
@@ -96,4 +98,5 @@ for i in range(5):
 df = pd.DataFrame()
 df['id'] = ids
 df['label'] = preds
-df.to_csv('/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/inference_classifier.csv', index=False)
+df.to_csv('/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/tf_effnet_b2_1024_image_size_inference.csv',
+          index=False)
