@@ -23,7 +23,8 @@ df = pd.DataFrame.from_dict(
     {'path': np.concatenate((train_path, test_path)), 'label': np.concatenate((train_labels, test_labels))})
 df = df.sample(frac=1).reset_index(drop=True)
 df.head()
-dls = ImageDataLoaders.from_df(df, bs=64, item_tfms=[Resize(256, Normalize.from_stats(*imagenet_stats))], path='/',valid_pct=0.4)
-learn = cnn_learner(dls, models.resnet34, metrics=accuracy)
+dls = ImageDataLoaders.from_df(df, bs=64, item_tfms=[Resize(256, Normalize.from_stats(*imagenet_stats))], path='/',
+                               valid_pct=0.4)
+learn = cnn_learner(dls, models.resnet34, metrics=RocAucBinary)
 print(learn.loss_func)
 # lr = learn.lr_find()
