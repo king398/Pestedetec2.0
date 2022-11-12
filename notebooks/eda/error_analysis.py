@@ -40,7 +40,7 @@ for i in train_df['image_id_worm'].values:
         mis_pred_id.append(id)
         id_error_dict.update({id: error})
     errors.append(error)
-id = random.choice(mis_pred_id)
+id = 'id_45cef53d71968f1ffd97945b'
 label_bbox = df_bbox[df_bbox['image_id'] == f"{id}.jpg"]
 img = cv2.imread(
     f"/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size/images/{id}.jpg")

@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import numpy as np
 from statistics import mean, mode
+from ensemble_boxes import soft_nms
 
 train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
@@ -44,7 +45,7 @@ def mae(y_true, y_pred):
 list(map(make_labels, train_df['image_id_worm'].values))
 oof = pd.DataFrame({'image_id_worm': ids, 'label': labels}, index=None)
 oof.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5l6-1536-image-size-25-epoch-with-classifer-pred.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5l6-1536-image-size-25-epoch-with-classifer-pred-nms.csv',
     index=False)
 pred_label_dict = dict(zip(oof['image_id_worm'].values, oof['label'].values))
 
