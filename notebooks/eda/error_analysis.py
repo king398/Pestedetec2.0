@@ -40,39 +40,35 @@ for i in train_df['image_id_worm'].values:
         mis_pred_id.append(id)
         id_error_dict.update({id: error})
     errors.append(error)
+id = random.choice(mis_pred_id)
+label_bbox = df_bbox[df_bbox['image_id'] == f"{id}.jpg"]
+img = cv2.imread(
+    f"/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size/images/{id}.jpg")
 
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+fig = plt.figure(figsize=(20, 20))
+# add title to fig
+fig.suptitle(f"{id} Predicted", fontsize=50)
+plt.imshow(img)
+plt.show()
+print(f"Error: {id_error_dict[id]}")
+print(f"Actual: {id_label_dict[f'{id}_pbw.jpg']} {id_label_dict[f'{id}_abw.jpg']}")
+print(f"Predicted: {pred_label_dict[f'{id}_pbw.jpg']} {pred_label_dict[f'{id}_abw.jpg']}")
+img = cv2.imread(
+    f'/home/mithil/PycharmProjects/Pestedetec2.0/notebooks/yolov5/dataset/fold_0/images/train/{id}.jpg')
+img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
-def show(id):
-    label_bbox = df_bbox[df_bbox['image_id'] == f"{id}.jpg"]
+if img is None:
     img = cv2.imread(
-        f"/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size/images/{id}.jpg")
-
+        f'/home/mithil/PycharmProjects/Pestedetec2.0/notebooks/yolov5/dataset/fold_0/images/val/{id}.jpg')
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    fig = plt.figure(figsize=(20, 20))
-    # add title to fig
-    fig.suptitle(f"{id} Predicted", fontsize=50)
-    plt.imshow(img)
-    plt.show()
-    print(f"Error: {id_error_dict[id]}")
-    print(f"Actual: {id_label_dict[f'{id}_pbw.jpg']} {id_label_dict[f'{id}_abw.jpg']}")
-    print(f"Predicted: {pred_label_dict[f'{id}_pbw.jpg']} {pred_label_dict[f'{id}_abw.jpg']}")
-    img = cv2.imread(f'/home/mithil/PycharmProjects/Pestedetec2.0/notebooks/yolov5/dataset/fold_0/images/train/{id}.jpg')
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-    if img is None:
-        img = cv2.imread(
-            f'/home/mithil/PycharmProjects/Pestedetec2.0/notebooks/yolov5/dataset/fold_0/images/val/{id}.jpg')
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-    for i in label_bbox.index:
-        bbox = label_bbox.loc[i, 'geometry']
-        bbox = loads(str(bbox))
-        bbox = bbox.bounds
-        img = cv2.rectangle(img, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (0, 255, 0), 2)
-    fig = plt.figure(figsize=(20, 20))
-    # add title to fig
-    fig.suptitle(f"{id} Label", fontsize=50)
-    plt.imshow(img)
-    plt.show()
-
-
-show(mis_pred_id[70])
+for i in label_bbox.index:
+    bbox = label_bbox.loc[i, 'geometry']
+    bbox = loads(str(bbox))
+    bbox = bbox.bounds
+    img = cv2.rectangle(img, (int(bbox[0]), int(bbox[1])), (int(bbox[2]), int(bbox[3])), (255, 0, 0), 2)
+fig = plt.figure(figsize=(20, 20))
+# add title to fig
+fig.suptitle(f"{id} Label", fontsize=50)
+plt.imshow(img)
+plt.show()

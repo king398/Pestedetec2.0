@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import numpy as np
-from statistics import mean
+from statistics import mean,mode
 
 train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
@@ -45,6 +45,7 @@ def make_labels(id):
                     pbw_2 += 1
                 else:
                     abw_2 += 1
+
     pbw = int(pbw_1*0.4 + pbw_2*0.6)
     abw = int(abw_1*0.4 + abw_2*0.6)
 

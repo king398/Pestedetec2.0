@@ -10,11 +10,10 @@ from tqdm import tqdm
 
 test_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Test.csv')
 pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-higher-confidence-0.35-image-size'
-pred_path_2 = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-image-size'
 classifier_df = pd.read_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/inference_classifier.csv')
+    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/tf_effnet_b2_1024_image_size_inference.csv')
 classifer_dict = dict(zip(classifier_df['id'].values, classifier_df['label'].values))
-
+pred_path_2 = f"/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-image-size-30-epoch"
 ids = []
 labels_final = []
 
@@ -32,11 +31,11 @@ def make_labels(id):
     for i in range(5):
 
         labels = []
-        pbw = 0
-        abw = 0
+        pbw = float(0)
+        abw = float(0)
         path = f'{pred_path}/yolov5m6-1536-higher-confidence-0.35-image-size_{i}_test/labels/{id}.txt'
 
-        if os.path.exists(path) and classifier_pred > 0.15:
+        if os.path.exists(path) and classifier_pred > 0.35:
             with open(path) as f:
                 preds_per_line = f.readlines()
 
@@ -51,14 +50,46 @@ def make_labels(id):
                 abw += 1
         pbw_list.append(pbw)
         abw_list.append(abw)
+    pbw_list_2 = []
+    abw_list_2 = []
 
-    pbw = int((np.average(pbw_list)))
-    abw = int((np.average(abw_list)))
+    for i in range(5):
+
+        labels = []
+        pbw = float(0)
+        abw = float(0)
+        path = f'{pred_path_2}/fold_{i}_test/labels/{id}.txt'
+
+        if os.path.exists(path) and classifier_pred > 0.35:
+            with open(path) as f:
+                preds_per_line = f.readlines()
+
+                for i in preds_per_line:
+                    i = i.split(' ')
+
+                    labels.append(int(i[0]))
+        for i in range(len(labels)):
+            if labels[i] == 0:
+                pbw += 1
+            else:
+                abw += 1
+        pbw_list_2.append(pbw)
+        abw_list_2.append(abw)
+    pbw_list_2 = np.array(pbw_list_2)
+    abw_list_2 = np.array(abw_list_2)
+    pbw_list = np.array(pbw_list)
+    abw_list = np.array(abw_list)
+    print(pbw_list)
+    print(abw_list)
+    print(pbw_list_2)
+    print(abw_list_2)
+    pbw = int(np.average(pbw_list_2) * 0.6 + np.average(pbw_list) * 0.4)
+    abw = int(np.average(abw_list_2) * 0.6 + np.average(abw_list) * 0.4)
     labels_final.extend([pbw, abw])
 
 
 list(map(make_labels, tqdm(test_df['image_id_worm'].values)))
 submission = pd.DataFrame({'image_id_worm': ids, 'label': labels_final}, index=None)
 submission.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/yolov5m6-1536-higher-confidence-0.35-image-size-with_classifier-.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/best-cv-ensemble-yolov5-30-epoch-yolov5-normal.csv',
     index=False)
