@@ -29,10 +29,12 @@ def make_labels(id):
         with open(
                 f'{pred_labels_path}/{id}.txt') as f:
             preds_per_line = f.readlines()
+
             for i in preds_per_line:
-                if i.split(' ')[0] == '0':
+                conf = float(i.split(' ')[5])
+                if i.split(' ')[0] == '0' and conf > 0.36:
                     pbw += 1
-                else:
+                elif i.split(' ')[0] == '1' and conf > 0.36:
                     abw += 1
 
     labels.extend([pbw, abw])

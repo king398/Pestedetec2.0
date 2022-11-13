@@ -4,7 +4,6 @@ import numpy as np
 from statistics import mean, mode
 import random
 from ensemble_boxes import soft_nms
-
 train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
 ids = []
@@ -94,5 +93,5 @@ error = list(map(return_error, train_df['image_id_worm'].values))
 print(mean(error))
 error_random_picked = []
 for i in range(69420):
-    error_random_picked.append(np.mean(random.choices(error, k=842)))
+    error_random_picked.append(np.mean(random.choices(error, k=3000)))
 print(min(error_random_picked))
