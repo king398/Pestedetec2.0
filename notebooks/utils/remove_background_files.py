@@ -10,6 +10,6 @@ for i in range(5):
     labels = glob.glob(f"{dir}/labels/train/*")
     for i in images:
         id = i.split("/")[-1].split(".")[0]
-        if not os.path.exists(f"{dir}/labels/train/{id}.txt") and removed < 1500:
+        if not os.path.exists(f"{dir}/labels/train/{id}.txt") and removed < 1200:
             os.remove(i)
             removed += 1

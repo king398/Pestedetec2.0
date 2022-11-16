@@ -8,6 +8,6 @@ for i in range(5):
               f" --source test_images"
               f" --name fold_{i}_test"
               f" --save-txt"
-              f" --conf 0.36"
+              f" --conf 0.1"
               f" --save-conf "
               f"")
