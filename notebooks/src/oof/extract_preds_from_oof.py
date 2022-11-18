@@ -4,20 +4,18 @@ import numpy as np
 from statistics import mean, mode
 import random
 from ensemble_boxes import soft_nms
+
 train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
 ids = []
 labels = []
-pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5l6-1536-image-size-25-epoch'
-pred_labels_path_2 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-30-epoch'
+pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-25-epoch-mskf'
+pred_labels_path_2 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-20-epoch-mskf'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
 classifier_pred = pd.read_csv(
     '/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/tf_effnet_b2_1024_image_size.csv')
 classifier_pred_dict = dict(zip(classifier_pred['id'].values, classifier_pred['pred'].values))
-classifier_pred_2 = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/oof.csv')
-classifier_pred_dict_2 = dict(zip(classifier_pred_2['id'].values, classifier_pred_2['pred'].values))
-pred_labels_path_3 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size'
 
 
 def make_labels(id):
@@ -29,40 +27,31 @@ def make_labels(id):
     classifier_pred = classifier_pred_dict[id] * 1.0
 
     if os.path.exists(
-            f'{pred_labels_path}/{id}.txt') and classifier_pred > 0.35:
+            f'{pred_labels_path}/{id}.txt'):
         with open(
                 f'{pred_labels_path}/{id}.txt') as f:
             preds_per_line = f.readlines()
+
             for i in preds_per_line:
-                if i.split(' ')[0] == '0':
+                conf = float(i.split(' ')[5])
+                if i.split(' ')[0] == '0' and conf > 0.35:
                     pbw_1 += 1
-                else:
+                elif i.split(' ')[0] == '1' and conf > 0.35:
                     abw_1 += 1
     pbw_2 = 0
     abw_2 = 0
-    if os.path.exists(f'{pred_labels_path_2}/{id}.txt') and classifier_pred > 0.35:
+    if os.path.exists(f'{pred_labels_path_2}/{id}.txt'):
         with open(
                 f'{pred_labels_path_2}/{id}.txt') as f:
             preds_per_line = f.readlines()
             for i in preds_per_line:
-                if i.split(' ')[0] == '0':
+                conf = float(i.split(' ')[5])
+                if i.split(' ')[0] == '0' and conf > 0.35:
                     pbw_2 += 1
-                else:
+                elif i.split(' ')[0] == '1' and conf > 0.35:
                     abw_2 += 1
-    pbw_3 = 0
-    abw_3 = 0
-    if os.path.exists(f'{pred_labels_path_3}/{id}.txt') and classifier_pred > 0.35:
-        with open(
-                f'{pred_labels_path_3}/{id}.txt') as f:
-            preds_per_line = f.readlines()
-            for i in preds_per_line:
-                if i.split(' ')[0] == '0':
-                    pbw_3 += 1
-                else:
-                    abw_3 += 1
-
-    pbw = int(pbw_3 * 0.2 + pbw_2 * 0.3 + pbw_1 * 0.5)
-    abw = int(abw_3 * 0.2 + abw_2 * 0.3 + abw_1 * 0.5)
+    pbw = int(pbw_2 * 0.4 + pbw_1 * 0.6)
+    abw = int(abw_2 * 0.4 + abw_1 * 0.6)
 
     labels.extend([pbw, abw])
 
@@ -74,7 +63,7 @@ def mae(y_true, y_pred):
 list(map(make_labels, train_df['image_id_worm'].values))
 oof = pd.DataFrame({'image_id_worm': ids, 'label': labels}, index=None)
 oof.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5l-yolov5m-ensemble-yolov5-30-epoch-pred.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5m6-1536-image-size-25-epoch-mskf-yolov5m6-1536-image-size-20-epoch-mskf.csv',
     index=False)
 pred_label_dict = dict(zip(oof['image_id_worm'].values, oof['label'].values))
 

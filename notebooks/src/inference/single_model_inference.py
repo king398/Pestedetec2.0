@@ -9,9 +9,9 @@ from ensemble_boxes import *
 from tqdm import tqdm
 
 test_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Test.csv')
-pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-higher-confidence-0.35-image-size'
+pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-image-size-25-epoch-mskf'
 classifier_df = pd.read_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/inference_classifier.csv')
+    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/tf_effnet_b2_1024_image_size_inference.csv')
 classifer_dict = dict(zip(classifier_df['id'].values, classifier_df['label'].values))
 ids = []
 labels_final = []
@@ -32,14 +32,16 @@ def make_labels(id):
         abw = float(0)
         path = f'{pred_path}/fold_{i}_test/labels/{id}.txt'
 
-        if os.path.exists(path) and classifier_pred > 0.1:
+        if os.path.exists(path):
             with open(path) as f:
                 preds_per_line = f.readlines()
 
                 for i in preds_per_line:
                     i = i.split(' ')
+                    conf = float(i[5])
 
-                    labels.append(int(i[0]))
+                    if conf > 0.35:
+                        labels.append(int(i[0]))
         for i in range(len(labels)):
             if labels[i] == 0:
                 pbw += 1
@@ -50,6 +52,8 @@ def make_labels(id):
 
     pbw_list = np.array(pbw_list)
     abw_list = np.array(abw_list)
+    print(pbw_list)
+    print(abw_list)
 
     pbw = int(np.average(pbw_list))
     abw = int(np.average(abw_list))
@@ -59,5 +63,5 @@ def make_labels(id):
 list(map(make_labels, tqdm(test_df['image_id_worm'].values)))
 submission = pd.DataFrame({'image_id_worm': ids, 'label': labels_final}, index=None)
 submission.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/yolov5m6-1536-higher-confidence-0.36-image-size.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/yolov5m6-1536-image-size-25-epoch-mskf.csv',
     index=False)

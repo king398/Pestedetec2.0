@@ -1,6 +1,7 @@
 import pandas as pd
 from iterstrat.ml_stratifiers import MultilabelStratifiedKFold
 import numpy as np
+import matplotlib.pyplot as plt
 
 train_modified = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/train_modified.csv')
 train = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
@@ -31,6 +32,12 @@ def make_fold():
 
     train_kf.drop('bins_1', axis=1, inplace=True)
     train_kf.drop('bins_2', axis=1, inplace=True)
+    labels_len_dict = {}
+    for i in range(5):
+        labels_len_dict.update({f'fold_{i}': train_kf[train_kf['fold'] != i]['pbw'].sum()})
+        labels_len_dict.update({f'abw_{i}': train_kf[train_kf['fold'] != i]['abw'].sum()})
+    plt.bar(labels_len_dict.keys(), labels_len_dict.values())
+    plt.show()
     return train_kf
 
 

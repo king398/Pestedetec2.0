@@ -8,7 +8,7 @@ train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
 ids = []
 labels = []
-pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size'
+pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-25-epoch-mskf'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
 classifier_pred = pd.read_csv(
@@ -31,10 +31,10 @@ def make_labels(id):
             preds_per_line = f.readlines()
 
             for i in preds_per_line:
-                #conf = float(i.split(' ')[5])
-                if i.split(' ')[0] == '0':
+                conf = float(i.split(' ')[5])
+                if i.split(' ')[0] == '0' and conf > 0.35:
                     pbw += 1
-                elif i.split(' ')[0] == '1' :
+                elif i.split(' ')[0] == '1' and conf > 0.35:
                     abw += 1
 
     labels.extend([pbw, abw])
@@ -47,7 +47,7 @@ def mae(y_true, y_pred):
 list(map(make_labels, train_df['image_id_worm'].values))
 oof = pd.DataFrame({'image_id_worm': ids, 'label': labels}, index=None)
 oof.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5m6-1536-image-size.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5m6-1536-image-size-25-epoch-mskf.csv',
     index=False)
 pred_label_dict = dict(zip(oof['image_id_worm'].values, oof['label'].values))
 

@@ -2,13 +2,13 @@ import os
 import glob
 import shutil
 
-save_path = "/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5s6-2200-image-size-25-epoch "
+save_path = "/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-20-epoch-mskf"
 for i in range(5):
     os.system(
-        f"python detect.py --weights /home/mithil/PycharmProjects/Pestedetec2.0/models/yolov5s6-2200-image-size-25-epoch/yolov5s6-2200-image-size-fold-{i}-25-epoch/weights/best.pt "
+        f"python detect.py --weights /home/mithil/PycharmProjects/Pestedetec2.0/models/yolov5m6-1536-image-size-20-epoch-mskf/yolov5m6-1536-image-size-fold-{i}-20-epoch-mskf/weights/best.pt "
 
-        f"--img-size 2200 --half "
-        f"--source dataset/fold_{i}/images/val "
+        f"--img-size 1536 --half "
+        f"--source /home/mithil/PycharmProjects/Pestedetec2.0/data/dataset/fold_{i}/images "
         f"--name yolov7x-custom-different-augs-image-size-1024-{i}_val --save-txt "
         f"--conf 0.1 "
         f"--save-conf  ")
