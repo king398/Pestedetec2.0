@@ -40,7 +40,7 @@ def make_labels(id):
         score_temp = []
         path = f'{pred_path}/fold_{i}_test/labels/{id}.txt'
 
-        if os.path.exists(path) and classifier_pred > 0.35:
+        if os.path.exists(path) and classifier_pred > 0.22932844884785952:
             with open(path) as f:
                 preds_per_line = f.readlines()
 
@@ -56,8 +56,10 @@ def make_labels(id):
                         labels_temp.append(int(i[0]))
                     except:
                         pass
-                bbox_temp, score_temp, labels_temp = soft_nms([bbox_temp], [score_temp], [labels_temp], iou_thr=0.3,
-                                                              sigma=0.9, thresh=0.4, method='nms', )
+                bbox_temp, score_temp, labels_temp = soft_nms([bbox_temp], [score_temp], [labels_temp],
+                                                              iou_thr=0.3374630899473163,
+                                                              sigma=0.44788629692967535, thresh=0.39320806458619273,
+                                                              method='nms', )
                 bboxes.append(bbox_temp)
                 scores.append(score_temp)
                 labels.append(labels_temp)

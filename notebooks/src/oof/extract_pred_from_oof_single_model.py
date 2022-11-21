@@ -6,12 +6,14 @@ from ensemble_boxes import *
 import cv2
 import matplotlib.pyplot as plt
 from pybboxes import BoundingBox
+from joblib import Parallel, delayed
+from tqdm import tqdm
 
 train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
 ids = []
 labels = []
-pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-25-epoch-mskf-tta'
+pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5m6-1536-image-size-epoch-mskf-cots-aug'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
 classifier_pred = pd.read_csv(
@@ -54,7 +56,6 @@ def show_image(im, name='image'):
 
 def make_labels(id):
     id = id.split('.')[0]
-    ids.extend([f"{id}_pbw.jpg", f"{id}_abw.jpg"])
     pbw = 0
     abw = 0
 
@@ -78,10 +79,9 @@ def make_labels(id):
                 bboxes.append(list(bbox))
                 scores.append(float(i[5]))
 
-
                 label.append(int(i[0]))
 
-            bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=0.3, sigma=0.9, thresh=0.4,
+            bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=0.4, sigma=0.8, thresh=0.35,
                                              method='nms', )
 
             for i in range(len(label)):
@@ -90,14 +90,20 @@ def make_labels(id):
                 else:
                     abw += 1
 
-    labels.extend([pbw, abw])
+    return pbw, abw, f"{id}_pbw.jpg", f"{id}_abw.jpg"
 
 
 def mae(y_true, y_pred):
     return np.abs(y_true - y_pred)
 
 
-list(map(make_labels, train_df['image_id_worm'].values))
+# list(map(make_labels, tqdm(train_df['image_id_worm'].values)))
+pred = Parallel(n_jobs=4)(delayed(make_labels)(id) for id in tqdm(train_df['image_id_worm'].values))
+for i in pred:
+    ids.append(i[2])
+    ids.append(i[3])
+    labels.append(i[0])
+    labels.append(i[1])
 oof = pd.DataFrame({'image_id_worm': ids, 'label': labels}, index=None)
 oof.to_csv(
     '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5m6-1536-image-size-25-epoch-mskf-1700-tta.csv',
