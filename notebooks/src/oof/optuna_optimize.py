@@ -2,13 +2,13 @@ import optuna
 import pandas as pd
 import os
 import numpy as np
-from statistics import mean, mode
+from statistics import mean
 from ensemble_boxes import *
-import cv2
-import matplotlib.pyplot as plt
+
 from pybboxes import BoundingBox
 from joblib import Parallel, delayed
 from tqdm import tqdm
+import yaml
 
 train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
@@ -120,11 +120,13 @@ def objective(trial):
     return mean(error)
 
 
-study = optuna.create_study(direction='minimize')
-study.optimize(objective, n_trials=100)
-best_param_save = {'iou_thr': 0.3374630899473163,
-                   'sigma': 0.44788629692967535,
-                   'thresh': 0.39320806458619273,
-                   'method': 'nms',
-                   'classifier_thresh': 0.22932844884785952}
-p
+study = optuna.create_study(direction='minimize', study_name='yolov5m6-1536-image-size-25-epoch-mskf-tta')
+study.optimize(objective, n_trials=100, show_progress_bar=True)
+best_param_save = study.best_params
+best_param_save.update({'best_score': study.best_value})
+best_param_save.update({'best_trial': study.best_trial.number})
+best_param_save.update({'path': pred_labels_path})
+### with best_param_save.yaml to /home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna
+with open(f'/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/{pred_labels_path.split("/")[-1]}.yaml',
+          'w') as f:
+    yaml.dump(best_param_save, f)
