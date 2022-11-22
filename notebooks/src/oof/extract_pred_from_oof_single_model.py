@@ -13,7 +13,7 @@ train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
 ids = []
 labels = []
-pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5m6-1536-image-size-epoch-mskf-cots-aug'
+pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-2000-image-size-mskf'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
 classifier_pred = pd.read_csv(
@@ -106,7 +106,7 @@ for i in pred:
     labels.append(i[1])
 oof = pd.DataFrame({'image_id_worm': ids, 'label': labels}, index=None)
 oof.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5m6-1536-image-size-25-epoch-mskf-1700-tta.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5m6-2000-image-size-mskf.csv',
     index=False)
 pred_label_dict = dict(zip(oof['image_id_worm'].values, oof['label'].values))
 

@@ -12,7 +12,6 @@ ids = []
 labels = []
 pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-25-epoch-mskf'
 pred_labels_path_2 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-25-epoch-mskf-tta'
-pred_labels_path_3 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5m6-1536-image-size-epoch-mskf-cots-aug'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
 classifier_pred = pd.read_csv(
@@ -91,37 +90,7 @@ def make_labels(id):
             bbox_final.append(bboxes)
             score.append(scores)
             label_final.append(label_list)
-    pbw_2 = 0
-    abw_2 = 0
 
-    if os.path.exists(f'{pred_labels_path_3}/{id}.txt') and classifier_pred > 0.35:
-        with open(
-                f'{pred_labels_path_3}/{id}.txt') as f:
-            preds_per_line = f.readlines()
-            bboxes = []
-            scores = []
-            label = []
-
-            for i in preds_per_line:
-                i = i.split(' ')
-                bbox = [float(i[1]), float(i[2]), float(i[3]), float(i[4])]
-                bbox = BoundingBox.from_yolo(*bbox, image_size=(1536, 1536))
-                bbox = bbox.to_albumentations().values
-
-                bboxes.append(list(bbox))
-                scores.append(float(i[5]))
-
-                label.append(int(i[0]))
-            bboxes, scores, label_list = soft_nms([bboxes], [scores], [label], iou_thr=0.3, sigma=0.9, thresh=0.4,
-                                                  method='nms', )
-            for i in range(len(bboxes)):
-                if label[i] == 0:
-                    pbw_2 += 1
-                else:
-                    abw_2 += 1
-            bbox_final.append(bboxes)
-            score.append(scores)
-            label_final.append(label_list)
     pbw = 0
     abw = 0
     if len(bbox_final) > 0:

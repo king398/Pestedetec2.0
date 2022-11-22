@@ -16,7 +16,7 @@ train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/t
 ids = []
 labels = []
 pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-25-epoch-mskf-tta'
-pred_labels_path_2 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-25-epoch-mskf'
+pred_labels_path_2 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5m6-2000-image-size-mskf'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
 classifier_pred = pd.read_csv(
@@ -41,8 +41,8 @@ def return_error(id, pred_label_dict):
 
 def make_labels(id, params):
     id = id.split('.')[0]
-    pbw = 0
-    abw = 0
+    pbw_1 = 0
+    abw_1 = 0
 
     classifier_pred = classifier_pred_dict[id] * 1.0
     bboxes_ensemble = []
@@ -74,7 +74,13 @@ def make_labels(id, params):
             bboxes_ensemble.append(bboxes)
             scores_ensemble.append(scores)
             labels_ensemble.append(label)
-
+            for i in range(len(label)):
+                if label[i] == 0:
+                    pbw_1 += 1
+                else:
+                    abw_1 += 1
+    pbw_2 = 0
+    abw_2 = 0
     if os.path.exists(
             f'{pred_labels_path_2}/{id}.txt') and classifier_pred > params['classifier_thresh_2']:
         with open(
@@ -101,27 +107,14 @@ def make_labels(id, params):
             bboxes_ensemble.append(bboxes)
             scores_ensemble.append(scores)
             labels_ensemble.append(label)
-    if len(bboxes_ensemble) > 0:
-        if len(bboxes_ensemble) == 1:
-            bboxes_ensemble, scores_ensemble, labels_ensemble = weighted_boxes_fusion(
-                bboxes_ensemble, scores_ensemble,
-                labels_ensemble,
-                iou_thr=params['iou_thr_3'],
+            for i in range(len(label)):
+                if label[i] == 0:
+                    pbw_2 += 1
+                else:
+                    abw_2 += 1
 
-            )
-        else:
-            bboxes_ensemble, scores_ensemble, labels_ensemble = weighted_boxes_fusion(bboxes_ensemble, scores_ensemble,
-                                                                                      labels_ensemble,
-                                                                                      iou_thr=params['iou_thr_3'],
-                                                                                      weights=[params['weights'],
-                                                                                               1 - params['weights']],
-                                                                                      )
-    for i in range(len(labels_ensemble)):
-        if labels_ensemble[i] == 0:
-            pbw += 1
-        else:
-            abw += 1
-
+    pbw = int(pbw_1 * params['weights'] + pbw_2 * (1 - params['weights']))
+    abw = int(abw_1 * params['weights'] + abw_2 * (1 - params['weights']))
     return pbw, abw, f"{id}_pbw.jpg", f"{id}_abw.jpg"
 
 
@@ -153,7 +146,6 @@ def objective(trial):
         'thresh_2': trial.suggest_float('thresh_2', 0.2, 0.6),
         'method_2': trial.suggest_categorical('method_2', ['nms', 'linear', 'gaussian']),
         'classifier_thresh_2': trial.suggest_float('classifier_thresh_2', 0.1, 0.7),
-        'iou_thr_3': trial.suggest_float('iou_thr_3', 0.1, 0.7),
         'weights': trial.suggest_float('weights', 0.1, 0.8),
 
     }
@@ -177,12 +169,12 @@ def objective(trial):
 
 
 study = optuna.create_study(direction='minimize', study_name='yolov5m6-1536-image-size-25-epoch-mskf-tta')
-study.optimize(objective, n_trials=1000, show_progress_bar=True)
+study.optimize(objective, n_trials=2000)
 best_param_save = study.best_params
 best_param_save.update({'best_score': study.best_value})
 best_param_save.update({'best_trial': study.best_trial.number})
 best_param_save.update({'path': pred_labels_path})
 with open(
-        f'/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/ensemble_{pred_labels_path.split("/")[-1]}_{pred_labels_path_2.split("/")[-1]}.yaml',
+        f'/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/ensemble_{pred_labels_path.split("/")[-1]}_{pred_labels_path_2.split("/")[-1]}_average.yaml',
         'w') as f:
     yaml.dump(best_param_save, f)

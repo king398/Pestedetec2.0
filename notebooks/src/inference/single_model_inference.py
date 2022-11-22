@@ -10,7 +10,7 @@ from tqdm import tqdm
 from pybboxes import BoundingBox
 
 test_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Test.csv')
-pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-image-size-25-epoch-mskf-tta-1700'
+pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-2000-image-size-mskf'
 classifier_df = pd.read_csv(
     '/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/tf_effnet_b2_1024_image_size_inference.csv')
 classifer_dict = dict(zip(classifier_df['id'].values, classifier_df['label'].values))
@@ -40,7 +40,7 @@ def make_labels(id):
         score_temp = []
         path = f'{pred_path}/fold_{i}_test/labels/{id}.txt'
 
-        if os.path.exists(path) and classifier_pred > 0.22932844884785952:
+        if os.path.exists(path) and classifier_pred > 0.34430639990504086:
             with open(path) as f:
                 preds_per_line = f.readlines()
 
@@ -57,9 +57,9 @@ def make_labels(id):
                     except:
                         pass
                 bbox_temp, score_temp, labels_temp = soft_nms([bbox_temp], [score_temp], [labels_temp],
-                                                              iou_thr=0.3374630899473163,
-                                                              sigma=0.44788629692967535, thresh=0.39320806458619273,
-                                                              method='nms', )
+                                                              iou_thr=0.2917894086130235,
+                                                              sigma=0.7685547062775053, thresh=0.3881250921369933,
+                                                              method='gaussian', )
                 bboxes.append(bbox_temp)
                 scores.append(score_temp)
                 labels.append(labels_temp)
@@ -78,5 +78,5 @@ def make_labels(id):
 list(map(make_labels, tqdm(test_df['image_id_worm'].values)))
 submission = pd.DataFrame({'image_id_worm': ids, 'label': labels_final}, index=None)
 submission.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/yolov5m6-1536-image-size-25-epoch-mskf-nms-1536-tta.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/yolov5m6-2000-image-size-mskf.csv',
     index=False)
