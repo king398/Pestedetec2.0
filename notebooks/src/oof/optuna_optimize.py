@@ -14,7 +14,7 @@ train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
 ids = []
 labels = []
-pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5m6-2000-image-size-mskf'
+pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5l6-1536-image-size-25-epoch-mskf-dif-tta'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
 classifier_pred = pd.read_csv(
@@ -102,7 +102,7 @@ def objective(trial):
 
     }
 
-    pred = Parallel(n_jobs=4)(delayed(make_labels)(id, params) for id in train_df['image_id_worm'].values)
+    pred = Parallel(n_jobs=6)(delayed(make_labels)(id, params) for id in train_df['image_id_worm'].values)
     ids = []
     labels = []
     for i in pred:
@@ -121,7 +121,7 @@ def objective(trial):
 
 
 study = optuna.create_study(direction='minimize', study_name='yolov5m6-1536-image-size-25-epoch-mskf-tta')
-study.optimize(objective, n_trials=100, show_progress_bar=True)
+study.optimize(objective, n_trials=300, show_progress_bar=True)
 best_param_save = study.best_params
 best_param_save.update({'best_score': study.best_value})
 best_param_save.update({'best_trial': study.best_trial.number})
