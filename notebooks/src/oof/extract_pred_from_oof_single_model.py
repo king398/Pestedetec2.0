@@ -13,7 +13,7 @@ train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
 ids = []
 labels = []
-pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-2000-image-size-mskf'
+pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5l6-1536-image-size-25-epoch-mskf'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
 classifier_pred = pd.read_csv(
@@ -118,7 +118,7 @@ def return_error(id):
     pbw_pred = pred_label_dict[f'{id}_pbw.jpg']
     abw_pred = pred_label_dict[f'{id}_abw.jpg']
     error = float(mae(np.array(pbw_label), np.array(pbw_pred)) + float(mae(np.array(abw_label), np.array(abw_pred))))
-    return error
+    return error / 2
 
 
 error = list(map(return_error, train_df['image_id_worm'].values))

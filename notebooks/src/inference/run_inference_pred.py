@@ -19,6 +19,6 @@ for i in range(5):
 
 dirs = os.listdir('runs/detect/')
 for i in dirs:
-    shutil.move(f'runs/detect/{i}/', f'{save_dir}/fold_{i}_test')
+    shutil.move(f'runs/detect/{i}/', f'{save_dir}')
 
 os.system('rm -r runs/detect/')

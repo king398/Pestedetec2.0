@@ -16,7 +16,7 @@ train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/t
 ids = []
 labels = []
 pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-25-epoch-mskf-tta'
-pred_labels_path_2 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5m6-2000-image-size-mskf'
+pred_labels_path_2 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5l6-1536-image-size-25-epoch-mskf'
 
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
@@ -70,8 +70,8 @@ def make_labels(id, params):
 
                 label.append(int(i[0]))
 
-            # bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr'],
-            # sigma=params['sigma'], thresh=params['thresh'], method=params['method'])
+            bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr'],
+                                             sigma=params['sigma'], thresh=params['thresh'], method=params['method'])
             bboxes_ensemble.append(bboxes)
             scores_ensemble.append(scores)
             labels_ensemble.append(label)
@@ -102,9 +102,9 @@ def make_labels(id, params):
 
                 label.append(int(i[0]))
 
-            # bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr_2'],
-            # sigma=params['sigma_2'], thresh=params['thresh_2'],
-            # method=params['method_2'])
+            bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr_2'],
+                                             sigma=params['sigma_2'], thresh=params['thresh_2'],
+                                             method=params['method_2'])
             bboxes_ensemble.append(bboxes)
             scores_ensemble.append(scores)
             labels_ensemble.append(label)
@@ -113,8 +113,7 @@ def make_labels(id, params):
                     pbw_2 += 1
                 else:
                     abw_2 += 1
-    bboxes, scores, label = soft_nms(bboxes_ensemble, scores_ensemble, labels_ensemble,
-                                                  iou_thr=params['iou_thr'], sigma=params['sigma'],thresh=params['thresh'], )
+
     pbw = int(pbw_1 * params['weights'] + pbw_2 * (1 - params['weights']))
     abw = int(abw_1 * params['weights'] + abw_2 * (1 - params['weights']))
     return pbw, abw, f"{id}_pbw.jpg", f"{id}_abw.jpg"
@@ -171,7 +170,7 @@ def objective(trial):
 
 
 study = optuna.create_study(direction='minimize', study_name='yolov5m6-1536-image-size-25-epoch-mskf-tta')
-study.optimize(objective, n_trials=2000)
+study.optimize(objective, n_trials=1000)
 best_param_save = study.best_params
 best_param_save.update({'best_score': study.best_value})
 best_param_save.update({'best_trial': study.best_trial.number})
