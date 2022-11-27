@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from pybboxes import BoundingBox
 from joblib import Parallel, delayed
 from tqdm import tqdm
+import yaml
 
 train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
@@ -19,6 +20,11 @@ id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['nu
 classifier_pred = pd.read_csv(
     '/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/tf_effnet_b2_1024_image_size.csv')
 classifier_pred_dict = dict(zip(classifier_pred['id'].values, classifier_pred['pred'].values))
+
+with open(
+        '/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/yolov5l6-1536-image-size-25-epoch-mskf_two.yaml') as f:
+    config = yaml.load(f, Loader=yaml.FullLoader)
+print(config)
 
 
 def gen_color_list(model_num, labels_num):
@@ -54,7 +60,7 @@ def show_image(im, name='image'):
     plt.show()
 
 
-def make_labels(id):
+def make_labels(id,params=config):
     id = id.split('.')[0]
     pbw = 0
     abw = 0
@@ -62,7 +68,7 @@ def make_labels(id):
     classifier_pred = classifier_pred_dict[id] * 1.0
 
     if os.path.exists(
-            f'{pred_labels_path}/{id}.txt') and classifier_pred > 0.35:
+            f'{pred_labels_path}/{id}.txt') and classifier_pred > params['classifier_thresh']:
         with open(
                 f'{pred_labels_path}/{id}.txt') as f:
             preds_per_line = f.readlines()
@@ -81,8 +87,7 @@ def make_labels(id):
 
                 label.append(int(i[0]))
 
-            bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=0.4, sigma=0.8, thresh=0.35,
-                                             method='nms', )
+            bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr'],sigma=params['sigma'], thresh=params['thresh'], method=params['method'])
 
             for i in range(len(label)):
                 if label[i] == 0:
@@ -106,7 +111,7 @@ for i in pred:
     labels.append(i[1])
 oof = pd.DataFrame({'image_id_worm': ids, 'label': labels}, index=None)
 oof.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5m6-2000-image-size-mskf.csv',
+    '/home/mithil/PycharmProjects/Pestedetec2.0/oof_df/yolov5l6-1536-image-size-mskf.csv',
     index=False)
 pred_label_dict = dict(zip(oof['image_id_worm'].values, oof['label'].values))
 
@@ -118,7 +123,7 @@ def return_error(id):
     pbw_pred = pred_label_dict[f'{id}_pbw.jpg']
     abw_pred = pred_label_dict[f'{id}_abw.jpg']
     error = float(mae(np.array(pbw_label), np.array(pbw_pred)) + float(mae(np.array(abw_label), np.array(abw_pred))))
-    return error / 2
+    return error
 
 
 error = list(map(return_error, train_df['image_id_worm'].values))

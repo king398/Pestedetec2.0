@@ -11,7 +11,7 @@ from pybboxes import BoundingBox
 import yaml
 
 test_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Test.csv')
-pred_path_2 = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5m6-1536-image-size-25-epoch-mskf-tta-1700'
+pred_path_2 = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5l6-1536-25-epoch-mskf-diff-augs'
 pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5l6-1536-image-size-25-epoch-mskf'
 classifier_df = pd.read_csv(
     '/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/tf_effnet_b2_1024_image_size_inference.csv')
@@ -20,7 +20,7 @@ ids = []
 labels_final = []
 
 with open(
-'/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/ensemble_yolov5m6-1536-image-size-25-epoch-mskf-tta_yolov5l6-1536-image-size-25-epoch-mskf_average.yaml') as f:
+        '/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/ensemble_yolov5l6-1536-25-epoch-mskf-diff-augs_yolov5l6-1536-image-size-25-epoch-mskf_average.yaml') as f:
     params = yaml.safe_load(f)
 
 
@@ -131,5 +131,5 @@ def make_labels(id):
 list(map(make_labels, tqdm(test_df['image_id_worm'].values)))
 submission = pd.DataFrame({'image_id_worm': ids, 'label': labels_final}, index=None)
 submission.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/ensemble_yolov5m6-1536-image-size-25-epoch-mskf-tta_yolov5l6-1536-image-size-25-epoch-mskf_average.csv',
+'/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/ensemble_yolov5l6-1536-25-epoch-mskf-diff-augs_yolov5l6-1536-image-size-25-epoch-mskf_average.csv',
     index=False)

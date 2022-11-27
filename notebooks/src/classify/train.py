@@ -39,43 +39,37 @@ set_seed(42)
 
 
 class BollwormDataset(Dataset):
-    def __init__(self, path, ids, val, transforms=None):
+    def __init__(self, paths, transforms=None):
         super().__init__()
-        self.path = path
-        self.ids = ids
-        self.val = val
+        self.paths = paths
         self.transforms = transforms
 
     def __len__(self):
         return len(self.ids)
 
     def __getitem__(self, index, ):
-        id = self.ids[index]
+        path = self.paths[index]
 
-        if self.val:
-            img = cv2.imread(f'{self.path}/images/val/{id}.jpg')
-            if os.path.exists(f'{self.path}/labels/val/{id}.txt'):
-                label = 1
-            else:
-                label = 0
-
-
-
-        else:
-            img = cv2.imread(f'{self.path}/images/train/{id}.jpg')
-            if os.path.exists(f'{self.path}/labels/train/{id}.txt'):
-                label = 1
-            else:
-                label = 0
+        img = cv2.imread(path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         if self.transforms:
             img = self.transforms(image=img)['image']
-
+        id = path.split('/')[-1].split('.')[0]
+        fold = path.split('/')[-3]
+        print(fold)
+        if os.path.exists(f'/notebooks/src/yolov5/dataset/{fold}/label/{id}.txt'):
+            label = 1
+        else:
+            label = 0
         return img, torch.tensor(label)
 
 
 def transform(DIM):
     return Compose([
         Resize(DIM, DIM),
+        HorizontalFlip(p=0.5),
+        VerticalFlip(p=0.5),
+
         Normalize(),
         ToTensorV2()
 
@@ -152,13 +146,21 @@ def val(model, loader, criterion, device, fold):
 
 for i in range(5):
     print(f'Fold {i}')
-    path = f"/notebooks/yolov5/dataset/fold_{i}"
-    train_ids = glob.glob(f"{path}/images/train/*.jpg")
-    train_ids = [i.split('/')[-1].split('.')[0] for i in train_ids]
-    val_ids = glob.glob(f"{path}/images/val/*.jpg")
+    path = []
+    for j in range(5):
+        if j != i:
+            path.append(f'/notebooks/src/yolov5/dataset/fold_{j}')
+    val_path = f'/notebooks/src/yolov5/dataset/fold_{i}'
+
+    train_ids_full_path = []
+    for i in path:
+        p = glob.glob(f'{i}/images/*.jpg') + glob.glob(f'{i}/images/*.jpeg')
+        train_ids_full_path.extend(p)
+    train_ids = [i.split('/')[-1].split('.')[0] for i in train_ids_full_path]
+    val_ids = glob.glob(f"{path}/images/*.jpg") + glob.glob(f"{path}/images/*.jpeg")
     val_ids = [i.split('/')[-1].split('.')[0] for i in val_ids]
     train_ds = BollwormDataset(path, train_ids, False, transforms=transform(1024))
-    val_ds = BollwormDataset(path, val_ids, True, transforms=transform(1024))
+    val_ds = BollwormDataset(val_path, val_ids, True, transforms=transform(1024))
     train_dl = DataLoader(train_ds, batch_size=24, shuffle=True, num_workers=8, pin_memory=True)
     val_dl = DataLoader(val_ds, batch_size=24, shuffle=False, num_workers=8, pin_memory=True)
     model = Model('tf_efficientnet_b4_ns', pretrained=True)

@@ -15,9 +15,9 @@ train_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Train.csv')
 train_labels_df = pd.read_csv('/home/mithil/PycharmProjects/Pestedetec2.0/data/train_modified.csv')
 ids = []
 labels = []
-pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-25-epoch-mskf-tta'
+pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5l6-1536-25-epoch-mskf-diff-augs'
 pred_labels_path_2 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5l6-1536-image-size-25-epoch-mskf'
-
+pred_labels_path_3 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5m6-2000-image-size-mskf'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
 classifier_pred = pd.read_csv(
@@ -113,9 +113,41 @@ def make_labels(id, params):
                     pbw_2 += 1
                 else:
                     abw_2 += 1
+    pbw_3 = 0
+    abw_3 = 0
+    if os.path.exists(
+            f'{pred_labels_path_3}/{id}.txt') and classifier_pred > params['classifier_thresh_3']:
+        with open(
+                f'{pred_labels_path_3}/{id}.txt') as f:
+            preds_per_line = f.readlines()
+            bboxes = []
+            scores = []
+            label = []
 
-    pbw = int(pbw_1 * params['weights'] + pbw_2 * (1 - params['weights']))
-    abw = int(abw_1 * params['weights'] + abw_2 * (1 - params['weights']))
+            for i in preds_per_line:
+                i = i.split(' ')
+                bbox = [float(i[1]), float(i[2]), float(i[3]), float(i[4])]
+                bbox = BoundingBox.from_yolo(*bbox, image_size=(1536, 1536))
+                bbox = bbox.to_albumentations().values
+
+                bboxes.append(list(bbox))
+                scores.append(float(i[5]))
+
+                label.append(int(i[0]))
+
+            bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr_3'],
+                                             sigma=params['sigma_3'], thresh=params['thresh_3'],
+                                             method=params['method_3'])
+            bboxes_ensemble.append(bboxes)
+            scores_ensemble.append(scores)
+            labels_ensemble.append(label)
+            for i in range(len(label)):
+                if label[i] == 0:
+                    pbw_3 += 1
+                else:
+                    abw_3 += 1
+    pbw = int(pbw_1 * params['weights_1'] + pbw_2 * params['weights_2'] + pbw_3 * params['weights_3'])
+    abw = int(abw_1 * params['weights_1'] + abw_2 * params['weights_2'] + abw_3 * params['weights_3'])
     return pbw, abw, f"{id}_pbw.jpg", f"{id}_abw.jpg"
 
 
@@ -142,12 +174,22 @@ def objective(trial):
         'thresh': trial.suggest_float('thresh', 0.2, 0.6),
         'method': trial.suggest_categorical('method', ['nms', 'linear', 'gaussian']),
         'classifier_thresh': trial.suggest_float('classifier_thresh', 0.1, 0.7),
+
         'iou_thr_2': trial.suggest_float('iou_thr_2', 0.1, 0.7),
         'sigma_2': trial.suggest_float('sigma_2', 0.3, 1.0),
         'thresh_2': trial.suggest_float('thresh_2', 0.2, 0.6),
         'method_2': trial.suggest_categorical('method_2', ['nms', 'linear', 'gaussian']),
         'classifier_thresh_2': trial.suggest_float('classifier_thresh_2', 0.1, 0.7),
-        'weights': trial.suggest_float('weights', 0.1, 0.8),
+
+        'iou_thr_3': trial.suggest_float('iou_thr_3', 0.1, 0.7),
+        'sigma_3': trial.suggest_float('sigma_3', 0.3, 1.0),
+        'thresh_3': trial.suggest_float('thresh_3', 0.2, 0.6),
+        'method_3': trial.suggest_categorical('method_3', ['nms', 'linear', 'gaussian']),
+        'classifier_thresh_3': trial.suggest_float('classifier_thresh_3', 0.1, 0.7),
+
+        'weights_1': trial.suggest_float('weights', 0.1, 0.8),
+        'weights_2': trial.suggest_float('weights', 0.1, 0.8),
+        'weights_3': trial.suggest_float('weights', 0.1, 0.8),
 
     }
 
@@ -176,6 +218,6 @@ best_param_save.update({'best_score': study.best_value})
 best_param_save.update({'best_trial': study.best_trial.number})
 best_param_save.update({'path': pred_labels_path})
 with open(
-        f'/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/ensemble_{pred_labels_path.split("/")[-1]}_{pred_labels_path_2.split("/")[-1]}_average.yaml',
+f'/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/ensemble_{pred_labels_path.split("/")[-1]}_{pred_labels_path_2.split("/")[-1]}_{pred_labels_path_3.split("/")[-1]}_average.yaml',
         'w') as f:
     yaml.dump(best_param_save, f)

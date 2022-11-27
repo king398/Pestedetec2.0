@@ -1,5 +1,4 @@
-__author__ = 'Mithil Salunkhe: https://www.kaggle.com/mithilsalunkhe'
-
+import random
 from statistics import mode
 from ensemble_boxes import nms
 import numpy as np
@@ -9,35 +8,31 @@ from ensemble_boxes import *
 from tqdm import tqdm
 from pybboxes import BoundingBox
 import yaml
+import cv2
+import matplotlib.pyplot as plt
 
 test_df = pd.read_csv('/home/mithil/PycharmProjects/PestDetect/data/Test.csv')
 pred_path = f'/home/mithil/PycharmProjects/Pestedetec2.0/pred_labels/yolov5l6-1536-image-size-25-epoch-mskf'
 classifier_df = pd.read_csv(
     '/home/mithil/PycharmProjects/Pestedetec2.0/pred_classfier_oof/tf_effnet_b2_1024_image_size_inference.csv')
 classifer_dict = dict(zip(classifier_df['id'].values, classifier_df['label'].values))
-ids = []
 labels_final = []
 with open(
-        '/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/yolov5l6-1536-image-size-25-epoch-mskf_two.yaml') as f:
+        '/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/yolov5l6-1536-image-size-25-epoch-mskf.yaml') as f:
     params = yaml.safe_load(f)
+write_dir = f'/home/mithil/PycharmProjects/Pestedetec2.0/data/pseudo_labels/yolov5l6-1536-image-size-25-epoch-mskf'
+os.makedirs(write_dir, exist_ok=True)
 
 
-def make_labels(id, params=params):
-    pbw = 0
-    abw = 0
+def write_label(id, params=params):
     id = id.split('.')[0]
 
-    ids.extend([f"{id}_pbw", f"{id}_abw"])
-
     classifier_pred = classifer_dict[id]
+
     bboxes = []
     labels = []
     scores = []
-    pbw_list = []
-    abw_list = []
     for i in range(5):
-        pbw = 0
-        abw = 0
 
         labels_temp = []
         bbox_temp = []
@@ -64,23 +59,25 @@ def make_labels(id, params=params):
                                                               iou_thr=params['iou_thr'],
                                                               sigma=params['sigma'], thresh=params['thresh'],
                                                               method=params['method'])
+
                 bboxes.append(bbox_temp)
                 scores.append(score_temp)
                 labels.append(labels_temp)
-        for i in labels_temp:
-            if i == 0:
-                pbw += 1
-            else:
-                abw += 1
-        pbw_list.append(pbw)
-        abw_list.append(abw)
-    pbw = int(np.mean(pbw_list))
-    abw = int(np.mean(abw_list))
-    labels_final.extend([pbw, abw])
+
+    if len(bboxes) > 0:
+        bboxes, labels, scores = weighted_boxes_fusion(bboxes, labels, scores, iou_thr=params['iou_thr'], )
+        if len(bboxes) > 0:
+            labels_file = open(f'{write_dir}/{id}.txt', 'w')
+        for i in range(len(bboxes)):
+            try:
+                bbox = BoundingBox.from_albumentations(*bboxes[i], image_size=(1536, 1536))
+                bbox = bbox.to_yolo().values
+                labels_file.write(f'\n {int(labels[i])} {bbox[0]} {bbox[1]} {bbox[2]} {bbox[3]}')
+            except:
+                pass
+
+        if len(bboxes) > 0:
+            labels_file.close()
 
 
-list(map(make_labels, tqdm(test_df['image_id_worm'].values)))
-submission = pd.DataFrame({'image_id_worm': ids, 'label': labels_final}, index=None)
-submission.to_csv(
-    '/home/mithil/PycharmProjects/Pestedetec2.0/pred_df/yolov5l6-1536-image-size-25-epoch.csv',
-    index=False)
+list(map(write_label, tqdm(test_df['image_id_worm'].values)))

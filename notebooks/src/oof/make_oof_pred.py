@@ -2,10 +2,10 @@ import os
 import glob
 import shutil
 
-save_path = "/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5l6-1536-image-size-25-epoch-mskf-dif-tta"
+save_path = "/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5l6-1536-25-epoch-mskf-pseudo"
 for i in range(5):
     os.system(
-        f"python detect.py --weights /home/mithil/PycharmProjects/Pestedetec2.0/models/mskf/yolov5l6-1536-image-size-25-epoch-mskf/yolov5l6-1536-image-size-fold-{i}-25-epoch-mskf/weights/best.pt "
+        f"python detect.py --weights /home/mithil/PycharmProjects/Pestedetec2.0/models/mskf/yolov5l6-1536-25-epoch-mskf-pseudo/yolov5l6-1536-image-size-fold-{i}-25-epoch-mskf-pseudo/weights/best.pt "
 
         f"--img-size 1536 --half "
         f"--source /home/mithil/PycharmProjects/Pestedetec2.0/data/dataset/fold_{i}/images "
