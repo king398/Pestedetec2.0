@@ -17,7 +17,7 @@ ids = []
 labels = []
 pred_labels_path = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5l6-1536-25-epoch-mskf-diff-augs'
 pred_labels_path_2 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5l6-1536-image-size-25-epoch-mskf'
-pred_labels_path_3 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/mskf/yolov5m6-2000-image-size-mskf'
+pred_labels_path_3 = '/home/mithil/PycharmProjects/Pestedetec2.0/oof_raw_preds/yolov5m6-1536-image-size-25-epoch-mskf'
 id_label_dict = dict(zip(train_labels_df['image_id'].values, train_labels_df['number_of_worms'].values))
 
 classifier_pred = pd.read_csv(
@@ -42,6 +42,8 @@ def return_error(id, pred_label_dict):
 
 def make_labels(id, params):
     id = id.split('.')[0]
+    pbw = 0
+    abw = 0
     pbw_1 = 0
     abw_1 = 0
 
@@ -70,8 +72,8 @@ def make_labels(id, params):
 
                 label.append(int(i[0]))
 
-            bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr'],
-                                             sigma=params['sigma'], thresh=params['thresh'], method=params['method'])
+            # bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr'],
+            # sigma=params['sigma'], thresh=params['thresh'], method=params['method'])
             bboxes_ensemble.append(bboxes)
             scores_ensemble.append(scores)
             labels_ensemble.append(label)
@@ -102,9 +104,9 @@ def make_labels(id, params):
 
                 label.append(int(i[0]))
 
-            bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr_2'],
-                                             sigma=params['sigma_2'], thresh=params['thresh_2'],
-                                             method=params['method_2'])
+            # bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr_2'],
+            # sigma=params['sigma_2'], thresh=params['thresh_2'],
+            # method=params['method_2'])
             bboxes_ensemble.append(bboxes)
             scores_ensemble.append(scores)
             labels_ensemble.append(label)
@@ -135,9 +137,9 @@ def make_labels(id, params):
 
                 label.append(int(i[0]))
 
-            bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr_3'],
-                                             sigma=params['sigma_3'], thresh=params['thresh_3'],
-                                             method=params['method_3'])
+            # bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr_3'],
+            # sigma=params['sigma_3'], thresh=params['thresh_3'],
+            # method=params['method_3'])
             bboxes_ensemble.append(bboxes)
             scores_ensemble.append(scores)
             labels_ensemble.append(label)
@@ -146,8 +148,23 @@ def make_labels(id, params):
                     pbw_3 += 1
                 else:
                     abw_3 += 1
-    pbw = int(pbw_1 * params['weights_1'] + pbw_2 * params['weights_2'] + pbw_3 * params['weights_3'])
-    abw = int(abw_1 * params['weights_1'] + abw_2 * params['weights_2'] + abw_3 * params['weights_3'])
+
+    if len(bboxes_ensemble) > 0:
+        bboxes_ensemble, scores_ensemble, labels_ensemble = weighted_boxes_fusion(bboxes_ensemble, scores_ensemble,
+                                                                                  labels_ensemble,
+
+                                                                                  weights=[params['weights_1'],
+                                                                                           params['weights_2'],
+                                                                                           params['weights_3']],
+                                                                                  iou_thr=params['iou_thr'],
+                                                                                  skip_box_thr=params['skip_box_thr'])
+    for i in range(len(labels_ensemble)):
+        if scores_ensemble[i] > params['wbf_conf']:
+            if labels_ensemble[i] == 0:
+                pbw += 1
+            else:
+                abw += 1
+
     return pbw, abw, f"{id}_pbw.jpg", f"{id}_abw.jpg"
 
 
@@ -170,26 +187,15 @@ class error_func:
 def objective(trial):
     params = {
         'iou_thr': trial.suggest_float('iou_thr', 0.1, 0.7),
-        'sigma': trial.suggest_float('sigma', 0.3, 1.0),
-        'thresh': trial.suggest_float('thresh', 0.2, 0.6),
-        'method': trial.suggest_categorical('method', ['nms', 'linear', 'gaussian']),
         'classifier_thresh': trial.suggest_float('classifier_thresh', 0.1, 0.7),
-
-        'iou_thr_2': trial.suggest_float('iou_thr_2', 0.1, 0.7),
-        'sigma_2': trial.suggest_float('sigma_2', 0.3, 1.0),
-        'thresh_2': trial.suggest_float('thresh_2', 0.2, 0.6),
-        'method_2': trial.suggest_categorical('method_2', ['nms', 'linear', 'gaussian']),
         'classifier_thresh_2': trial.suggest_float('classifier_thresh_2', 0.1, 0.7),
-
-        'iou_thr_3': trial.suggest_float('iou_thr_3', 0.1, 0.7),
-        'sigma_3': trial.suggest_float('sigma_3', 0.3, 1.0),
-        'thresh_3': trial.suggest_float('thresh_3', 0.2, 0.6),
-        'method_3': trial.suggest_categorical('method_3', ['nms', 'linear', 'gaussian']),
         'classifier_thresh_3': trial.suggest_float('classifier_thresh_3', 0.1, 0.7),
-
         'weights_1': trial.suggest_float('weights', 0.1, 0.8),
-        'weights_2': trial.suggest_float('weights', 0.1, 0.8),
-        'weights_3': trial.suggest_float('weights', 0.1, 0.8),
+        'weights_2': trial.suggest_float('weights_2', 0.1, 0.8),
+        'weights_3': trial.suggest_float('weights_3', 0.1, 0.8),
+
+        'skip_box_thr': trial.suggest_float('skip_box_thr', 0.1, 0.8),
+        'wbf_conf': trial.suggest_float('wbf_conf', 0.1, 0.8),
 
     }
 
@@ -218,6 +224,6 @@ best_param_save.update({'best_score': study.best_value})
 best_param_save.update({'best_trial': study.best_trial.number})
 best_param_save.update({'path': pred_labels_path})
 with open(
-f'/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/ensemble_{pred_labels_path.split("/")[-1]}_{pred_labels_path_2.split("/")[-1]}_{pred_labels_path_3.split("/")[-1]}_average.yaml',
+        f'/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/ensemble_{pred_labels_path.split("/")[-1]}_{pred_labels_path_2.split("/")[-1]}_{pred_labels_path_3.split("/")[-1]}-wbf-second-try.yaml',
         'w') as f:
     yaml.dump(best_param_save, f)

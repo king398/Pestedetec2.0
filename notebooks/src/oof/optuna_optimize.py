@@ -65,7 +65,7 @@ def make_labels(id, params):
                 label.append(int(i[0]))
 
             bboxes, scores, label = soft_nms([bboxes], [scores], [label], iou_thr=params['iou_thr'],
-                                             sigma=params['sigma'], thresh=params['thresh'], method=params['method'])
+                                             sigma=params['sigma'], thresh=params['thresh'], method=params['method'],)
 
             for i in range(len(label)):
                 if label[i] == 0:
@@ -121,12 +121,12 @@ def objective(trial):
 
 
 study = optuna.create_study(direction='minimize', study_name='yolov5m6-1536-image-size-25-epoch-mskf-tta')
-study.optimize(objective, n_trials=1000, show_progress_bar=True)
+study.optimize  (objective, n_trials=1000, )
 best_param_save = study.best_params
 best_param_save.update({'best_score': study.best_value})
 best_param_save.update({'best_trial': study.best_trial.number})
 best_param_save.update({'path': pred_labels_path})
 ### with best_param_save.yaml to /home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna
-with open(f'/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/{pred_labels_path.split("/")[-1]}_two.yaml',
+with open(f'/home/mithil/PycharmProjects/Pestedetec2.0/best_values_optuna/{pred_labels_path.split("/")[-1]}-renset-old.yaml',
           'w') as f:
     yaml.dump(best_param_save, f)

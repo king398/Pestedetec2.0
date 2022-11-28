@@ -35,6 +35,7 @@ for i in train_df.index:
                 mae(np.array(abw_label), np.array(pred_label_dict[f'{id}_abw.jpg'])))))
 
 
+
         else:
             correct_pred += 1
             errors.append(float(0))
@@ -43,12 +44,16 @@ for i in train_df.index:
         pred_label_dict[f'{id}_abw.jpg'] = 0
 
     else:
-        errors.append(float(mae(np.array(pbw_label), np.array(pred_label_dict[f'{id}_pbw.jpg'])) + float(
-            mae(np.array(abw_label), np.array(pred_label_dict[f'{id}_abw.jpg'])))))
+        er = float(mae(np.array(pbw_label), np.array(pred_label_dict[f'{id}_pbw.jpg'])) + float(
+            mae(np.array(abw_label), np.array(pred_label_dict[f'{id}_abw.jpg']))))
+
+        errors.append(er)
 print(np.mean(errors))
-df = pd.DataFrame.from_dict({'error': errors})
+df = pd.DataFrame.from_dict({'error': errors, 'image_id': train_df['image_id_worm'].values})
 df['error'] = df['error'].astype('int')
-df['error'] = df[df['error'] != 0].reset_index(drop=True)
+df = df.dropna(axis=0)
 # Here we use a column with categorical data
 fig = px.histogram(df, x="error")
 fig.show()
+errors = np.array(errors)
+print(train_df.image_id_worm.values[(-errors).argsort()[:5]])
